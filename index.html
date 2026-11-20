@@ -350,6 +350,16 @@
         .nav-logo:hover { opacity: 0.8; }
         .nav-logo i { -webkit-text-fill-color: var(--gradient-end); font-size: 1.1rem; }
 
+        /* Light mode: logo navbar (teks + ikon) disamakan warnanya dengan
+           gradasi judul section (#2477b0 -> #b3661a) agar konsisten. */
+        [data-theme="light"] .nav-logo {
+            background: linear-gradient(135deg, #2477b0, #b3661a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        [data-theme="light"] .nav-logo i { -webkit-text-fill-color: #b3661a; }
+
         .nav-links {
             display: flex;
             gap: 0.3rem;
@@ -2177,6 +2187,30 @@
             .section-header .icon-wrap,
             .card-accent { animation: none; transform: none !important; }
         }
+
+        /* ===== PERFORMA MOBILE ===== */
+        /* Penyebab scroll tersendat di mobile: backdrop-filter harus dihitung
+           ulang tiap frame saat section (induknya) ikut ditransformasi 3D.
+           Radius blur diperkecil khusus layar kecil agar biayanya turun
+           drastis, sementara tampilan kaca tetap terasa sama. */
+        @media (max-width: 768px) {
+            .glass,
+            .glass-light,
+            .hero-card,
+            .figure-chip,
+            .skills-category,
+            .project-card,
+            .contact-wrapper,
+            [data-theme="light"] .glass,
+            [data-theme="light"] .glass-light {
+                -webkit-backdrop-filter: blur(8px) !important;
+                backdrop-filter: blur(8px) !important;
+            }
+            .nav-bar {
+                -webkit-backdrop-filter: blur(12px) !important;
+                backdrop-filter: blur(12px) !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2294,7 +2328,7 @@
 
                             <!-- ACTIONS -->
                             <div class="hero-actions reveal" style="transition-delay:0.30s;">
-                                <a href="/AGUNG IMAN WICAKSONO_CV Resume.pdf" target="_blank" rel="noopener noreferrer" class="btn-primary">
+                                <a href="/CV%20ATS%20-%20Agung%20Iman%20Wicaksono.pdf" target="_blank" rel="noopener noreferrer" class="btn-primary">
                                     <span class="btn-label">View CV</span>
                                     <span class="btn-icon"><i class="fas fa-eye"></i></span>
                                 </a>
@@ -2365,9 +2399,9 @@
                         </div>
                         <div class="sub">Universitas Negeri Semarang · GPA 3.62/4.00</div>
                         <ul>
-                            <li>Developed a strong foundation in programming, software engineering, database management, and application development</li>
-                            <li>Gained hands-on experience through academic and independent projects in full-stack web development, information systems, and 3D game development</li>
-                            <li>Conducted machine learning research on classification problems, covering data preprocessing, feature selection, model development, and hyperparameter optimization</li>
+                            <li>Developed a strong foundation in programming, software engineering, database management, and application development.</li>
+                            <li>Gained hands-on experience through academic and independent projects in full-stack web development, information systems, and 3D game development.</li>
+                            <li>Conducted machine learning research on classification problems, covering data preprocessing, feature selection, model development, and hyperparameter optimization.</li>
                         </ul>
                     </div>
                 </div>
@@ -2387,9 +2421,9 @@
                         </div>
                         <div class="sub">Sekretariat Daerah Kota Semarang</div>
                         <ul>
-                            <li>Developed and structured the TAPEM platform interface using Laravel and Tailwind CSS, including front-end implementation and UI improvements</li>
-                            <li>Built interactive interfaces for public service information and government service features</li>
-                            <li>Integrated front-end components with back-end functionality, supporting data flow and application features</li>
+                            <li>Developed and structured the TAPEM platform interface using Laravel and Tailwind CSS, including front-end implementation and UI improvements.</li>
+                            <li>Built interactive interfaces for public service information and government service features.</li>
+                            <li>Integrated front-end components with back-end functionality, supporting data flow and application features.</li>
                         </ul>
                     </div>
                     <div class="timeline-item">
@@ -2399,9 +2433,9 @@
                         </div>
                         <div class="sub">Infinite Learning Indonesia (MSIB Batch 7)</div>
                         <ul>
-                            <li>Created and refined 3D game assets and environments using Blender and Unity</li>
-                            <li>Contributed to game design, level design, and gameplay development in a collaborative team</li>
-                            <li>Collaborated with team members to develop and present a playable game project</li>
+                            <li>Created and refined 3D game assets and environments using Blender and Unity.</li>
+                            <li>Contributed to game design, level design, and gameplay development in a collaborative team.</li>
+                            <li>Collaborated with team members to develop and present a playable game project.</li>
                         </ul>
                     </div>
                     <div class="timeline-item">
@@ -2411,9 +2445,9 @@
                         </div>
                         <div class="sub">PT Antasena Sakti Griya Kencana</div>
                         <ul>
-                            <li>Developed website pages using WordPress to meet company requirements</li>
-                            <li>Customized website layouts, themes, and visual elements to improve usability and presentation</li>
-                            <li>Supported website promotion through digital marketing activities to expand online reach</li>
+                            <li>Developed website pages using WordPress to meet company requirements.</li>
+                            <li>Customized website layouts, themes, and visual elements to improve usability and presentation.</li>
+                            <li>Supported website promotion through digital marketing activities to expand online reach.</li>
                         </ul>
                     </div>
                 </div>
@@ -2652,29 +2686,23 @@
         }
 
         // Scroll Progress
+        // Elemen & tinggi dokumen di-cache di luar listener: query DOM / hitung
+        // layout tiap kali scroll memicu style-recalc yang bikin mobile tersendat.
+        const scrollProgressEl = document.getElementById('scroll-progress');
+        const navbarScrollEl = document.getElementById('navbar');
+        const backToTopEl = document.getElementById('back-to-top');
         window.addEventListener('scroll', () => {
-            const scrollProgress = document.getElementById('scroll-progress');
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = (scrollTop / docHeight) * 100;
-            scrollProgress.style.width = scrollPercent + '%';
+            const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            if (scrollProgressEl) scrollProgressEl.style.width = scrollPercent + '%';
 
             // Navbar scrolled
-            const navbar = document.getElementById('navbar');
-            if (scrollTop > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
+            if (navbarScrollEl) navbarScrollEl.classList.toggle('scrolled', scrollTop > 50);
 
             // Back to top
-            const backToTop = document.getElementById('back-to-top');
-            if (scrollTop > 500) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
-        });
+            if (backToTopEl) backToTopEl.classList.toggle('visible', scrollTop > 500);
+        }, { passive: true });
 
         // Back to top
         document.getElementById('back-to-top').addEventListener('click', () => {
@@ -2757,19 +2785,13 @@
             });
 
             navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + current) {
-                    link.classList.add('active');
-                }
+                link.classList.toggle('active', link.getAttribute('href') === '#' + current);
             });
 
             mobileNavLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('data-target') === '#' + current) {
-                    link.classList.add('active');
-                }
+                link.classList.toggle('active', link.getAttribute('data-target') === '#' + current);
             });
-        });
+        }, { passive: true });
 
         // Navbar: logo -> kembali ke home, dan klik link -> scroll pas ke section.
         // Offset dihitung dari tinggi navbar nyata agar isi section tidak tertutup.
@@ -2875,6 +2897,21 @@
             }
             resizeCanvas();
 
+            // Partikel digambar lewat satu sprite (bitmap kecil) lalu di-blit dengan
+            // drawImage. Ini jauh lebih murah daripada beginPath/arc/fill tiap
+            // partikel tiap frame — kunci agar scroll di mobile tetap lancar.
+            const SPRITE = document.createElement('canvas');
+            const SPRITE_SIZE = 16;
+            SPRITE.width = SPRITE.height = SPRITE_SIZE;
+            const spriteCtx = SPRITE.getContext('2d');
+            function buildSprite(rgb) {
+                spriteCtx.clearRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
+                spriteCtx.beginPath();
+                spriteCtx.arc(SPRITE_SIZE / 2, SPRITE_SIZE / 2, SPRITE_SIZE / 2, 0, Math.PI * 2);
+                spriteCtx.fillStyle = `rgb(${rgb})`;
+                spriteCtx.fill();
+            }
+
             class Particle {
                 constructor() {
                     this.reset();
@@ -2894,10 +2931,9 @@
                     if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
                 }
                 draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${particleRGB}, ${this.opacity})`;
-                    ctx.fill();
+                    const d = this.size * 2;
+                    ctx.globalAlpha = this.opacity;
+                    ctx.drawImage(SPRITE, this.x - this.size, this.y - this.size, d, d);
                 }
             }
 
@@ -2909,6 +2945,7 @@
                 const isLight = html.getAttribute('data-theme') === 'light';
                 const small = window.innerWidth < 768;
                 particleRGB = isLight ? '212, 118, 31' : '77, 184, 255';
+                buildSprite(particleRGB);
                 tuning = isLight
                     ? { count: small ? 50 : 100, minOpacity: 0.55, spread: 0.35, minSize: 1.1, sizeSpread: 1.8 }
                     : { count: small ? 30 : 60, minOpacity: 0.1, spread: 0.4, minSize: 0.5, sizeSpread: 2 };
@@ -2921,19 +2958,37 @@
             refreshParticles = refreshParticleTheme;
             refreshParticleTheme();
 
+            // Di mobile, scroll memunculkan/menyembunyikan address bar sehingga
+            // event 'resize' ikut terpicu walau lebar layar tidak berubah. Kalau
+            // partikel di-reset di sini, posisinya melompat tiap kali address bar
+            // bergerak. Karena itu refresh partikel hanya saat LEBAR berubah
+            // (resize/rotasi sungguhan); perubahan tinggi saja cukup resize kanvas.
+            let lastCanvasWidth = window.innerWidth;
             window.addEventListener('resize', () => {
                 resizeCanvas();
-                refreshParticleTheme();
+                if (window.innerWidth !== lastCanvasWidth) {
+                    lastCanvasWidth = window.innerWidth;
+                    refreshParticleTheme();
+                }
             });
 
+            let particleRaf = null;
             function animateParticles() {
+                // Hentikan loop saat tab tidak terlihat agar tidak membebani
+                // sekaligus menghemat baterai di mobile.
+                if (document.hidden) { particleRaf = null; return; }
+                particleRaf = requestAnimationFrame(animateParticles);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
                     p.update();
                     p.draw();
-                });
-                requestAnimationFrame(animateParticles);
+                }
+                ctx.globalAlpha = 1;
             }
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && particleRaf === null) animateParticles();
+            });
             animateParticles();
         }
 
@@ -3017,7 +3072,11 @@
                     // Efeknya jadi konsisten di semua section.
                     span: (window.innerHeight + sec.offsetHeight) / 2,
                     icon: sec.querySelector('.section-header .icon-wrap'),
-                    accent: sec.querySelector('.card-accent')
+                    accent: sec.querySelector('.card-accent'),
+                    // Cache nilai terakhir: section yang jauh dari viewport punya
+                    // nilai konstan (d-clamp), jadi tak perlu ditulis ulang tiap
+                    // frame. Menghemat style-recalc yang bikin scroll tersendat.
+                    lastT: '', lastIconZ: '', lastAccX: '', lastAccZ: ''
                 }));
             }
 
@@ -3042,9 +3101,12 @@
                     const tz = (-v.z * SCALE * ad).toFixed(1);
                     const sc = (1 - v.drop * SCALE * ad).toFixed(3);
 
-                    it.sec.style.transform =
-                        `perspective(1500px) translate3d(${tx}px, 0, ${tz}px) ` +
+                    const t = `perspective(1500px) translate3d(${tx}px, 0, ${tz}px) ` +
                         `rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${sc})`;
+                    if (t !== it.lastT) {
+                        it.sec.style.transform = t;
+                        it.lastT = t;
+                    }
 
                     // Parallax elemen dalam (foreground bergerak lebih cepat -> kesan depth).
                     // Elemen dekoratif kartu tetap diberi parallax.
@@ -3052,11 +3114,21 @@
                     // scroll — hanya diberi kedalaman (z) — agar selalu center
                     // dengan teks judulnya di semua section (termasuk Projects).
                     if (it.icon) {
-                        it.icon.style.setProperty('--iw-z', Math.round(45 * SCALE) + 'px');
+                        const iz = Math.round(45 * SCALE) + 'px';
+                        if (iz !== it.lastIconZ) {
+                            it.icon.style.setProperty('--iw-z', iz);
+                            it.lastIconZ = iz;
+                        }
                     }
                     if (it.accent) {
-                        it.accent.style.setProperty('--ca-x', (-d * 26 * SCALE).toFixed(1) + 'px');
-                        it.accent.style.setProperty('--ca-z', Math.round(60 * SCALE) + 'px');
+                        const ax = (-d * 26 * SCALE).toFixed(1) + 'px';
+                        const az = Math.round(60 * SCALE) + 'px';
+                        if (ax !== it.lastAccX || az !== it.lastAccZ) {
+                            it.accent.style.setProperty('--ca-x', ax);
+                            it.accent.style.setProperty('--ca-z', az);
+                            it.lastAccX = ax;
+                            it.lastAccZ = az;
+                        }
                     }
                 });
             }
