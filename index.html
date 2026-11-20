@@ -647,17 +647,22 @@
         @media (max-width: 480px) { .section { padding: 0.5rem 0; scroll-margin-top: 70px; } }
 
         /* Jarak ANTAR-SECTION dari Home→About→Education→Experience→Skills dibuat
-           lebih renggang. Skills→Projects ke bawah tidak diubah.
-           Rentang About→Skills dibuat lebih renggang lagi. */
+           lebih renggang. Di desktop, Skills→Projects ke bawah dibiarkan rapat;
+           di mobile (lihat media query di bawah) gap Skills→Projects dan
+           Projects→Contact ikut dilonggarkan agar tidak terlalu rapat. */
         #hero { margin-bottom: 5rem; }
         #summary, #education, #experience { margin-bottom: 8rem; }
         @media (max-width: 768px) {
             #hero { margin-bottom: 3.5rem; }
             #summary, #education, #experience { margin-bottom: 5rem; }
+            /* Mobile: jarak isi Skills -> judul Projects dan isi Projects -> judul
+               Contact disamakan & dilonggarkan agar tidak terlalu rapat. */
+            #skills, #projects { margin-bottom: 5rem; }
         }
         @media (max-width: 480px) {
             #hero { margin-bottom: 2.75rem; }
             #summary, #education, #experience { margin-bottom: 3.5rem; }
+            #skills, #projects { margin-bottom: 3.5rem; }
         }
 
         .section-header {
@@ -2189,11 +2194,39 @@
         }
 
         /* ===== PERFORMA MOBILE ===== */
-        /* Penyebab scroll tersendat di mobile: backdrop-filter harus dihitung
-           ulang tiap frame saat section (induknya) ikut ditransformasi 3D.
-           Radius blur diperkecil khusus layar kecil agar biayanya turun
-           drastis, sementara tampilan kaca tetap terasa sama. */
+        /* Akar masalah scroll tersendat di mobile:
+           1) Section besar ditransformasi 3D TIAP FRAME oleh scroll-scene. Setiap
+              elemen dengan backdrop-filter / filter: blur di dalamnya dipaksa
+              menghitung ulang blur tiap frame -> ini penyebab utama "delay".
+           2) Aturan global `* { backface-visibility: hidden }` + `will-change`
+              permanen membuat puluhan layer GPU terbentuk -> memori komposit
+              penuh sehingga frame berikutnya tertunda.
+           Solusi: scene 3D dan biaya berat di atas hanya untuk desktop. Di mobile
+           konten mengalir normal — tanpa transform per-frame & tanpa layer
+           berlebih — sehingga scroll kembali mulus. */
         @media (max-width: 768px) {
+            /* (1) Matikan penuh transform/perspective scene 3D pada section. */
+            .section {
+                perspective: none !important;
+                transform-style: flat !important;
+                transform: none !important;
+                will-change: auto !important;
+                backface-visibility: visible !important;
+                -webkit-backface-visibility: visible !important;
+            }
+            /* Judul gradasi tidak lagi perlu dipromosikan ke layer sendiri. */
+            .section-header h2,
+            .hero-content h1,
+            .project-title .title-line-2 {
+                will-change: auto !important;
+                transform: none !important;
+            }
+            /* (2) Netralkan backface-visibility global agar layer GPU tidak menumpuk. */
+            * {
+                -webkit-backface-visibility: visible !important;
+                backface-visibility: visible !important;
+            }
+            /* (3) Radius blur dikecilkan (tetap ada, tapi jauh lebih murah). */
             .glass,
             .glass-light,
             .hero-card,
@@ -3030,33 +3063,35 @@
         // Murni CSS 3D transform + requestAnimationFrame (tanpa library tambahan).
         (() => {
             const root = document.documentElement;
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            // ----- Ambience warna -----
+            // Diberlakukan di semua perangkat & tema (termasuk mobile): ini hanya
+            // men-set variabel warna, bukan beban render.
+            // Warna dibuat KONSISTEN di semua section dan di kedua tema
+            // (biru → oranye) memakai warna brand, sehingga lintasan background
+            // saat scroll tidak berubah antara light & night mode.
+            const AMB_A = 203; // biru brand (#4db8ff)
+            const AMB_B = 28;  // oranye brand (#f09b4a)
+            root.style.setProperty('--amb-a', `hsl(${AMB_A} 82% 58%)`);
+            root.style.setProperty('--amb-b', `hsl(${AMB_B} 82% 54%)`);
+
+            // Scene 3D (transform per-frame pada section besar) hanya dijalankan di
+            // desktop dan saat motion tidak dibatasi. Di mobile scene ini dimatikan
+            // (lihat blok "PERFORMA MOBILE" di CSS) supaya scroll tetap mulus.
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
             const sections = Array.from(document.querySelectorAll('.section'));
             if (!sections.length) return;
 
-            // Redam kekuatan efek di layar kecil agar tetap smooth & tidak berlebihan.
-            const SCALE = window.matchMedia('(max-width: 768px)').matches ? 0.55 : 1;
+            // Di desktop efek dipakai penuh.
+            const SCALE = 1;
 
             // Karakter transisi 3D yang KONSISTEN untuk SEMUA section:
             // satu pola gerak yang sama (tilt lembut + depth + skala) dipakai di
             // setiap perpindahan section, sehingga transisinya terasa seragam.
             // rx/ry/rz: derajat, drop: rasio skala, z/tx: px.
             const MOTION = { rx: 3.5, ry: 0.0, rz: 0.0, drop: 0.06, z: 95, tx: 0 };
-
-            // ----- Ambience warna -----
-            // Warna ambience dibuat KONSISTEN di semua section DAN di kedua tema
-            // (biru → oranye) memakai warna brand yang sama, sehingga lintasan
-            // background saat scroll tidak berubah antara light & night mode.
-            const AMB_A = 203; // biru brand (#4db8ff)
-            const AMB_B = 28;  // oranye brand (#f09b4a)
-            function applyAmbience() {
-                const sat = '82%';
-                // Lightness SAMA untuk light & dark agar ambience identik di kedua tema.
-                root.style.setProperty('--amb-a', `hsl(${AMB_A} ${sat} 58%)`);
-                root.style.setProperty('--amb-b', `hsl(${AMB_B} ${sat} 54%)`);
-            }
-            applyAmbience();
 
             // ----- 3D transform scroll-linked -----
             let items = [];
