@@ -2115,30 +2115,19 @@
             z-index: -1;
             pointer-events: none;
             background:
-                radial-gradient(38vmax 38vmax at 22% 26%, color-mix(in srgb, var(--amb-a) 34%, transparent), transparent 70%),
-                radial-gradient(44vmax 44vmax at 80% 76%, color-mix(in srgb, var(--amb-b) 30%, transparent), transparent 72%);
-            opacity: 0.6;
+                radial-gradient(46vmax 46vmax at 22% 26%, color-mix(in srgb, var(--amb-a) 44%, transparent), transparent 70%),
+                radial-gradient(52vmax 52vmax at 80% 76%, color-mix(in srgb, var(--amb-b) 38%, transparent), transparent 72%);
+            opacity: 0.75;
             transition: opacity 0.6s ease;
         }
         /* Light mode: latar terang menelan warna blob, sehingga blob terlihat
            pudar. Intensitas dinaikkan (opacity + kadar warna) agar kontras
            ambience terasa setara dengan night mode, tanpa mengubah hue brand. */
         [data-theme="light"] body::before {
-            opacity: 0.95;
+            opacity: 0.8;
             background:
-                radial-gradient(40vmax 40vmax at 22% 26%, color-mix(in srgb, var(--amb-a) 58%, transparent), transparent 70%),
-                radial-gradient(46vmax 46vmax at 80% 76%, color-mix(in srgb, var(--amb-b) 52%, transparent), transparent 72%);
-        }
-        /* Mobile night mode: layar kecil membuat blob tampak pudar, sehingga
-           kontras ambience dinaikkan (opacity + kadar warna) agar setara desktop. */
-        @media (max-width: 768px) {
-            [data-theme="dark"] body::before,
-            html:not([data-theme="light"]) body::before {
-                opacity: 0.92;
-                background:
-                    radial-gradient(46vmax 46vmax at 22% 26%, color-mix(in srgb, var(--amb-a) 56%, transparent), transparent 70%),
-                    radial-gradient(52vmax 52vmax at 80% 76%, color-mix(in srgb, var(--amb-b) 50%, transparent), transparent 72%);
-            }
+                radial-gradient(42vmax 42vmax at 22% 26%, color-mix(in srgb, var(--amb-a) 48%, transparent), transparent 70%),
+                radial-gradient(48vmax 48vmax at 80% 76%, color-mix(in srgb, var(--amb-b) 42%, transparent), transparent 72%);
         }
 
         /* Tiap section jadi "panggung" 3D: punya perspective + depth untuk anaknya. */
